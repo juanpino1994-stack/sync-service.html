@@ -1,31 +1,39 @@
-name: Traductor de IP Eficaz
+name: Traductor de IP Eficaz Automático
 on:
-  workflow_dispatch:
-  repository_dispatch:
-    types: [update_ip]
+  schedule:
+    # Esto le dice al robot que trabaje solo cada hora
+    - cron: '0 * * * *'
+  workflow_dispatch: # Esto te permite darle al botón "Run workflow" si tienes prisa
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # ESTO ES LO QUE FALTA PARA QUE NO SALGA LA X ROJA:
     permissions:
       contents: write
     steps:
       - name: Checkout del código
         uses: actions/checkout@v3
 
+      - name: Obtener IP actual
+        id: get_ip
+        run: |
+          IP=$(curl -s https://api.ipify.org)
+          echo "ip_detectada=$IP" >> $GITHUB_OUTPUT
+
       - name: Crear archivo de lista IPTV
         run: |
           echo "#EXTM3U" > lista_amigo.m3u
           echo "#EXTINF:-1, Mi Lista IPTV Actualizada" >> lista_amigo.m3u
-          echo "http://tu-servidor-iptv.com/live?ip=${{ github.event.client_payload.ip || '1.1.1.1' }}" >> lista_amigo.m3u
+          # Aquí usa la IP que acaba de encontrar el robot
+          echo "http://tu-servidor-iptv.com/live?ip=${{ steps.get_ip.outputs.ip_detectada }}" >> lista_amigo.m3u
 
-      - name: Guardar cambios
+      - name: Guardar cambios en el repositorio
         run: |
           git config --global user.name "Robot IPTV"
           git config --global user.email "robot@iptv.com"
           git add lista_amigo.m3u
-          git commit -m "Actualización Exitosa" || echo "Sin cambios"
+          git commit -m "Actualización automática de IP" || echo "Sin cambios"
           git push
         env:
+          # Aquí es donde el robot saca la llave de la caja fuerte (Secret)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
