@@ -3,42 +3,39 @@ name: Traductor de IP Eficaz
 on:
   repository_dispatch:
     types: [update_ip]
-  workflow_dispatch:
+  workflow_dispatch: # Esto permite el botón "Ejecutar flujo de trabajo" en GitHub
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
+    # Permisos necesarios para que el robot pueda escribir el archivo
+    permissions:
+      contents: write
+    
     steps:
       - name: Descargar Repositorio
         uses: actions/checkout@v3
 
-      - name: Procesar IP Quirúrgico
+      - name: Procesar IP
         run: |
-          # 1. Capturar la IP real que mandó tu botón
-          IP_NUEVA="${{ github.event.client_payload.ip_usuario }}"
+          # 1. Intentar sacar la IP del botón, si no, usar la del servidor
+          IP_BOTON="${{ github.event.client_payload.ip_usuario }}"
+          IP_SERVER=$(curl -s https://ifconfig.me)
           
-          # Si por alguna razón llega vacía, no hacemos nada para no romper la lista
-          if [ -z "$IP_NUEVA" ]; then
-            echo "Error: No se recibió la IP del botón"
-            exit 1
+          if [ -n "$IP_BOTON" ] && [ "$IP_BOTON" != "null" ]; then
+            IP_FINAL=$IP_BOTON
+            echo "Usando IP enviada por el botón: $IP_FINAL"
+          else
+            IP_FINAL=$IP_SERVER
+            echo "Usando IP detectada por el servidor: $IP_FINAL"
           fi
-
-          # 2. Convertir tu IP a Base64 (lo que va después del :9092/)
-          IP_BASE64=$(echo -n "$IP_NUEVA" | base64)
           
-          echo "Sincronizando todo a la IP: $IP_NUEVA"
+          # 2. Reemplazar en el archivo exacto de tu captura
+          sed "s/deportes.ksdjugfsddeports.com/$IP_FINAL/g" lista_maestra.txt > lista_amigo.m3u
 
-          # 3. EL REEMPLAZO TOTAL:
-          # Primero cambiamos el dominio/IP del principio
-          # Segundo cambiamos la parte codificada después del puerto
-          sed "s/deportes.ksdjugfsddeports.com/$IP_NUEVA/g" lista_maestra.txt > temp.txt
-          
-          # Esta línea busca lo que hay entre :9092/ y el siguiente / y lo cambia por tu nueva IP en base64
-          sed -E "s|:9092/[^/]+|:9092/$IP_BASE64|g" temp.txt > lista_amigo.m3u
-
-          # 4. Guardar cambios en GitHub
+          # 3. Configurar Git y subir cambios
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Sincronización total exitosa: $IP_NUEVA" || echo "Sin cambios"
+          git commit -m "Lista actualizada con IP: $IP_FINAL" || echo "Sin cambios"
           git push origin main
