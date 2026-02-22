@@ -1,41 +1,22 @@
-name: Traductor de IP Eficaz
-
+name: Traductor de IP Directo
 on:
-  repository_dispatch:
-    types: [update_ip]
-  workflow_dispatch: # Esto permite el botón "Ejecutar flujo de trabajo" en GitHub
+  workflow_dispatch: # Para que lo actives tú mismo con un clic
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
-    # Permisos necesarios para que el robot pueda escribir el archivo
     permissions:
       contents: write
-    
     steps:
-      - name: Descargar Repositorio
-        uses: actions/checkout@v3
-
-      - name: Procesar IP
+      - uses: actions/checkout@v3
+      - name: Reemplazo Forzado
         run: |
-          # 1. Intentar sacar la IP del botón, si no, usar la del servidor
-          IP_BOTON="${{ github.event.client_payload.ip_usuario }}"
-          IP_SERVER=$(curl -s https://ifconfig.me)
+          # REEMPLAZO DIRECTO: Ponemos TU IP real aquí para dejar de adivinar
+          # (Reemplaza 181.43.120.182 por la IP que te mostró la página)
+          sed "s/deportes.ksdjugfsddeports.com/181.43.120.182/g" lista_maestra.txt > lista_amigo.m3u
           
-          if [ -n "$IP_BOTON" ] && [ "$IP_BOTON" != "null" ]; then
-            IP_FINAL=$IP_BOTON
-            echo "Usando IP enviada por el botón: $IP_FINAL"
-          else
-            IP_FINAL=$IP_SERVER
-            echo "Usando IP detectada por el servidor: $IP_FINAL"
-          fi
-          
-          # 2. Reemplazar en el archivo exacto de tu captura
-          sed "s/deportes.ksdjugfsddeports.com/$IP_FINAL/g" lista_maestra.txt > lista_amigo.m3u
-
-          # 3. Configurar Git y subir cambios
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Lista actualizada con IP: $IP_FINAL" || echo "Sin cambios"
+          git commit -m "Sincronización manual forzada" || echo "Sin cambios"
           git push origin main
