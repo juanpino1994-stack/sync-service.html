@@ -1,1 +1,27 @@
 name: Traductor de IP Eficaz
+on:
+  repository_dispatch:
+    types: [update_ip]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Crear archivo de lista IPTV
+        run: |
+          echo "#EXTM3U" > lista_amigo.m3u
+          echo "#EXTINF:-1, Mi Lista IPTV Actualizada" >> lista_amigo.m3u
+          echo "http://tu-servidor-iptv.com/live?ip=${{ github.event.client_payload.ip }}" >> lista_amigo.m3u
+
+      - name: Guardar cambios con la llave secreta
+        run: |
+          git config --global user.name "Robot IPTV"
+          git config --global user.email "robot@iptv.com"
+          git add lista_amigo.m3u
+          git commit -m "IP actualizada por Traductor Eficaz: ${{ github.event.client_payload.ip }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.MI_TOKEN }}
