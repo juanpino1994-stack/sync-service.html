@@ -1,11 +1,15 @@
 name: Traductor de IP Eficaz
 on:
+  workflow_dispatch:
   repository_dispatch:
     types: [update_ip]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ESTO ES LO QUE FALTA PARA QUE NO SALGA LA X ROJA:
+    permissions:
+      contents: write
     steps:
       - name: Checkout del código
         uses: actions/checkout@v3
@@ -14,14 +18,14 @@ jobs:
         run: |
           echo "#EXTM3U" > lista_amigo.m3u
           echo "#EXTINF:-1, Mi Lista IPTV Actualizada" >> lista_amigo.m3u
-          echo "http://tu-servidor-iptv.com/live?ip=${{ github.event.client_payload.ip }}" >> lista_amigo.m3u
+          echo "http://tu-servidor-iptv.com/live?ip=${{ github.event.client_payload.ip || '1.1.1.1' }}" >> lista_amigo.m3u
 
-      - name: Guardar cambios con la llave secreta
+      - name: Guardar cambios
         run: |
           git config --global user.name "Robot IPTV"
           git config --global user.email "robot@iptv.com"
           git add lista_amigo.m3u
-          git commit -m "IP actualizada por Traductor Eficaz: ${{ github.event.client_payload.ip }}"
+          git commit -m "Actualización Exitosa" || echo "Sin cambios"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.MI_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
