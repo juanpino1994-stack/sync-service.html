@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Zinc Service - Auth</title>
+    <title>Sync Service - Auth</title>
     <meta charset="UTF-8">
 </head>
 <body style="font-family: sans-serif; text-align: center; padding: 50px;">
-    <h2>Panel de Sincronización</h2>
-    <p>Presiona el botón para validar tu conexión actual.</p>
+    <h2>Panel de Sincronización de Protocolo</h2>
+    <p>Presiona el botón para activar tu señal de IPTV.</p>
     
     <button onclick="enviarIP()" style="padding: 15px 30px; font-size: 18px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px;">
         SINCRONIZAR AHORA
@@ -17,26 +17,48 @@
     <script>
         function enviarIP() {
             const display = document.getElementById('mensaje');
-            display.innerText = "Cargando protocolo...";
+            
+            // Configuración corregida
+            const TOKEN = "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"; 
+            const REPO = "juanpino1994-stack/sync-service.html"; 
+
+            display.innerText = "Conectando con el servidor...";
             display.style.color = "orange";
 
+            // 1. Obtiene la IP actual de quien presiona el botón
             fetch('https://api.ipify.org?format=json')
-            .then(response => {
-                if (!response.ok) throw new Error('Error de red');
-                return response.json();
+            .then(res => {
+                if (!res.ok) throw new Error('Error al obtener IP');
+                return res.json();
             })
             .then(data => {
                 const ip = data.ip;
-                // Mensaje de éxito rotundo
-                display.innerText = "¡ÉXITO! IP " + ip + " sincronizada. Ya puedes ver tus canales.";
-                display.style.color = "green";
                 
-                // Aquí es donde el robot de GitHub recibirá la señal en el siguiente paso
-                console.log("IP capturada para el robot: " + ip);
+                // 2. Envía la orden al robot de GitHub (Action)
+                return fetch(`https://api.github.com/repos/${REPO}/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        event_type: 'update_ip',
+                        client_payload: { ip: ip }
+                    })
+                });
             })
-            .catch(error => {
-                display.innerText = "ERROR: No se pudo capturar la IP. Reintenta o usa datos móviles.";
+            .then(response => {
+                if (response.status === 204) {
+                    display.innerText = "¡ÉXITO! Protocolo enviado. En 1 minuto tu lista estará lista.";
+                    display.style.color = "green";
+                } else {
+                    throw new Error('GitHub no aceptó el token');
+                }
+            })
+            .catch(err => {
+                display.innerText = "Error: Verifica tu conexión o el Token.";
                 display.style.color = "red";
+                console.error(err);
             });
         }
     </script>
