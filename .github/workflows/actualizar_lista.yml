@@ -1,22 +1,39 @@
-name: Traductor de IP Directo
+name: Traductor de IP Eficaz
+
 on:
-  workflow_dispatch: # Para que lo actives tú mismo con un clic
+  repository_dispatch:
+    types: [update_ip]
+  workflow_dispatch:
 
 jobs:
-  actualizar:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
-      - name: Reemplazo Forzado
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Reemplazo Quirúrgico de IP
         run: |
-          # REEMPLAZO DIRECTO: Ponemos TU IP real aquí para dejar de adivinar
-          # (Reemplaza 181.43.120.182 por la IP que te mostró la página)
-          sed "s/deportes.ksdjugfsddeports.com/181.43.120.182/g" lista_maestra.txt > lista_amigo.m3u
+          IP_USUARIO="${{ github.event.client_payload.ip_usuario }}"
           
+          # Si no viene IP del botón, el robot se auto-detecta
+          if [ -z "$IP_USUARIO" ] || [ "$IP_USUARIO" == "null" ]; then
+            IP_USUARIO=$(curl -s https://ifconfig.me)
+          fi
+
+          echo "Procesando con IP: $IP_USUARIO"
+
+          # Usamos una variable para el dominio y que el comando sea limpio
+          DOMINIO="deportes.ksdjugfsddeports.com"
+          
+          # REEMPLAZO: Cambiamos el dominio por la IP de forma exacta
+          sed "s/$DOMINIO/$IP_USUARIO/g" lista_maestra.txt > lista_amigo.m3u
+
+          # Guardar cambios en GitHub
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Sincronización manual forzada" || echo "Sin cambios"
+          git commit -m "IP Actualizada: $IP_USUARIO" || echo "Sin cambios"
           git push origin main
