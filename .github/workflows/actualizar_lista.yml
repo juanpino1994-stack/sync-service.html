@@ -3,37 +3,35 @@ name: Traductor de IP Eficaz
 on:
   repository_dispatch:
     types: [update_ip]
-  workflow_dispatch:
 
 jobs:
-  build:
+  actualizar:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout
+      - name: Descargar Repositorio
         uses: actions/checkout@v3
 
-      - name: Reemplazo Quirúrgico de IP
+      - name: Reemplazo Quirúrgico
         run: |
-          IP_USUARIO="${{ github.event.client_payload.ip_usuario }}"
+          # Capturamos la IP que viene del botón
+          IP_BOTON="${{ github.event.client_payload.ip_usuario }}"
           
-          # Si no viene IP del botón, el robot se auto-detecta
-          if [ -z "$IP_USUARIO" ] || [ "$IP_USUARIO" == "null" ]; then
-            IP_USUARIO=$(curl -s https://ifconfig.me)
+          # VALIDACIÓN: Si la IP viene vacía, el robot se detiene para no poner IPs de GitHub
+          if [ -z "$IP_BOTON" ] || [ "$IP_BOTON" == "null" ]; then
+            echo "ERROR: No se recibió la IP del usuario. Abortando para no dañar la lista."
+            exit 1
           fi
 
-          echo "Procesando con IP: $IP_USUARIO"
-
-          # Usamos una variable para el dominio y que el comando sea limpio
-          DOMINIO="deportes.ksdjugfsddeports.com"
+          echo "Poniendo tu IP real: $IP_BOTON"
           
-          # REEMPLAZO: Cambiamos el dominio por la IP de forma exacta
-          sed "s/$DOMINIO/$IP_USUARIO/g" lista_maestra.txt > lista_amigo.m3u
+          # Reemplazo exacto del dominio
+          sed "s/deportes.ksdjugfsddeports.com/$IP_BOTON/g" lista_maestra.txt > lista_amigo.m3u
 
-          # Guardar cambios en GitHub
+          # Subir cambios
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "IP Actualizada: $IP_USUARIO" || echo "Sin cambios"
+          git commit -m "Lista actualizada con tu IP: $IP_BOTON" || echo "Sin cambios"
           git push origin main
