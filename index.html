@@ -1,49 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sincronizador Pro</title>
-    <style>
-        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
-        button { padding: 12px 24px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        #status { margin-top: 15px; color: #555; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>Sincronizar IP</h2>
-        <button id="btn" onclick="lanzar()">ACTUALIZAR LISTA</button>
-        <div id="status">Presiona para actualizar tu acceso.</div>
-    </div>
-
-    <script>
-        async function lanzar() {
-            const btn = document.getElementById('btn');
-            const status = document.getElementById('status');
-            btn.disabled = true;
-            status.innerText = "Capturando IP...";
-
-            try {
-                const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                const miIP = data.ip;
-
-                // Enviamos a tu Pipedream
-                await fetch("https://eozxbiwyymdbb76.m.pipedream.net", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ip_usuario: miIP })
-                });
-
-                status.innerHTML = "<b style='color:green'>¡IP Enviada! (" + miIP + ")</b><br>Espera 30 segundos.";
-            } catch (e) {
-                status.innerText = "Error de conexión.";
-            } finally {
-                btn.disabled = false;
-            }
-        }
-    </script>
-</body>
-</html>
+async function lanzar() {
+    // 1. Obtiene tu IP
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    
+    // 2. La manda a tu Pipedream
+    await fetch("https://eozxbiwyymdbb76.m.pipedream.net", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip_usuario: data.ip }) 
+    });
+    
+    alert("IP enviada: " + data.ip);
+}
