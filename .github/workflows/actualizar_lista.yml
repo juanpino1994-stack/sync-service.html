@@ -1,6 +1,7 @@
 name: Traductor de IP Eficaz
 
 on:
+  workflow_dispatch: # ESTO ACTIVA EL BOTÓN GRIS MANUAL
   repository_dispatch:
     types: [update_ip]
 
@@ -10,28 +11,25 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Descargar Repositorio
+      - name: Checkout del repo
         uses: actions/checkout@v3
 
-      - name: Reemplazo Quirúrgico
+      - name: Cambiar IP en la lista
         run: |
-          # Capturamos la IP que viene del botón
-          IP_BOTON="${{ github.event.client_payload.ip_usuario }}"
-          
-          # VALIDACIÓN: Si la IP viene vacía, el robot se detiene para no poner IPs de GitHub
-          if [ -z "$IP_BOTON" ] || [ "$IP_BOTON" == "null" ]; then
-            echo "ERROR: No se recibió la IP del usuario. Abortando para no dañar la lista."
-            exit 1
+          # Si viene de Pipedream usa esa, si no, usa la del servidor
+          IP_VIVE="${{ github.event.client_payload.ip_usuario }}"
+          if [ -z "$IP_VIVE" ] || [ "$IP_VIVE" == "null" ]; then
+            IP_VIVE=$(curl -s https://ifconfig.me)
           fi
-
-          echo "Poniendo tu IP real: $IP_BOTON"
           
-          # Reemplazo exacto del dominio
-          sed "s/deportes.ksdjugfsddeports.com/$IP_BOTON/g" lista_maestra.txt > lista_amigo.m3u
+          echo "Sincronizando con IP: $IP_VIVE"
+          
+          # El comando de reemplazo limpio
+          sed "s/deportes.ksdjugfsddeports.com/$IP_VIVE/g" lista_maestra.txt > lista_amigo.m3u
 
-          # Subir cambios
+          # Subir los cambios
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Lista actualizada con tu IP: $IP_BOTON" || echo "Sin cambios"
+          git commit -m "IP Actualizada: $IP_VIVE" || echo "Sin cambios"
           git push origin main
