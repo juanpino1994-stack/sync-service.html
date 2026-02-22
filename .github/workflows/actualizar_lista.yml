@@ -1,36 +1,15 @@
-name: Traductor de IP Eficaz
-on:
-  repository_dispatch:
-    types: [update_ip]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout del código
-        uses: actions/checkout@v3
-
-      - name: Obtener IP actual
-        id: get_ip
+- name: Actualizar IP en la Lista
         run: |
-          IP=$(curl -s https://api.ipify.org)
-          echo "ip_detectada=$IP" >> $GITHUB_OUTPUT
-
-      - name: Crear archivo IPTV
-        run: |
-          echo "#EXTM3U" > lista_amigo.m3u
-          echo "#EXTINF:-1, Lista Actualizada" >> lista_amigo.m3u
-          echo "http://tu-servidor-iptv.com/live?ip=${{ steps.get_ip.outputs.ip_detectada }}" >> lista_amigo.m3u
-
-      - name: Guardar cambios
-        run: |
-          git config --global user.name "Robot IPTV"
-          git config --global user.email "robot@iptv.com"
+          # 1. Obtener tu IP actual
+          IP_ACTUAL=$(curl -s https://ifconfig.me)
+          
+          # 2. Reemplazar el dominio por tu IP en una lista nueva
+          # Cambiamos 'deportes.ksdjugfsddeports.com' por tu IP real
+          sed "s/deportes.ksdjugfsddeports.com/$IP_ACTUAL/g" lista_maestra.txt > lista_amigo.m3u
+          
+          # 3. Subir los cambios a GitHub
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Actualización por señal web" || echo "Sin cambios"
+          git commit -m "Lista actualizada con IP: $IP_ACTUAL"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
