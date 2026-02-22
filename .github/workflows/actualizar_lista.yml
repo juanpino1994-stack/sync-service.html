@@ -2,32 +2,37 @@ name: Traductor de IP Eficaz
 
 on:
   repository_dispatch:
+    # Este es el nombre del evento que debe coincidir en Pipedream
     types: [update_ip]
+  workflow_dispatch: # Esto permite que también lo pruebes a mano en GitHub
 
 jobs:
-  build:
+  actualizar:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del código
-        uses: actions/checkout@v2
+      - name: Descargar Repositorio
+        uses: actions/checkout@v3
 
-      - name: Actualizar IP en la Lista
+      - name: Procesar IP
         run: |
-          # 1. Recibir la IP que envía el botón de la web
-          IP_ACTUAL="${{ github.event.client_payload.ip_usuario }}"
+          # Prioridad 1: IP que viene del botón. Prioridad 2: IP del servidor (por si falla el botón)
+          IP_BOTON="${{ github.event.client_payload.ip_usuario }}"
+          IP_SERVER=$(curl -s https://ifconfig.me)
           
-          # 2. Validar que la IP no llegue vacía
-          if [ -z "$IP_ACTUAL" ]; then
-            echo "Error: No se recibió la IP del usuario"
-            exit 1
+          if [ -n "$IP_BOTON" ]; then
+            IP_FINAL=$IP_BOTON
+          else
+            IP_FINAL=$IP_SERVER
           fi
-
-          # 3. Reemplazar el dominio por tu IP real en la lista
-          sed "s/deportes.ksdjugfsddeports.com/$IP_ACTUAL/g" lista_maestra.txt > lista_amigo.m3u
           
-          # 4. Guardar y subir los cambios a tu repositorio
+          echo "La IP a usar es: $IP_FINAL"
+          
+          # Hacer el cambio en tu archivo
+          sed "s/deportes.ksdjugfsddeports.com/$IP_FINAL/g" lista_maestra.txt > lista_amigo.m3u
+
+          # Subir cambios
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Lista actualizada con IP real: $IP_ACTUAL" || echo "Sin cambios"
+          git commit -m "IP actualizada: $IP_FINAL" || echo "Sin cambios"
           git push origin main
