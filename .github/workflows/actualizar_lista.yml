@@ -1,30 +1,19 @@
-name: Traductor de IP eficaz
-on:
-  repository_dispatch:
-    types: [update_ip]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Actualizar Lista
+      - name: Actualizar IP en la Lista
         run: |
-          # 1. Sacamos la IP
-          IP=$(curl -s https://ifconfig.me)
+          # 1. Obtener tu IP actual
+          IP_ACTUAL=$(curl -s https://ifconfig.me)
           
-          # 2. Reemplazo directo (Volvemos a lo seguro)
-          # Asegúrate que en tu lista_maestra.txt el dominio sea exactamente este:
-          sed "s/deportes.ksdjugfsddeports.com/$IP/g" lista_maestra.txt > lista_amigo.m3u
+          # 2. REEMPLAZO MAESTRO:
+          # Buscamos la IP vieja (172.182.211.20) y la cambiamos por la tuya.
+          # También nos aseguramos de que el link sea compatible.
+          sed -i "s/172.182.211.20/$IP_ACTUAL/g" lista_maestra.txt
           
-          # 3. Subir cambios
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git commit -m "IP actualizada" || exit 0
-          git push
+          # 3. Guardamos el resultado en la lista del amigo
+          cp lista_maestra.txt lista_amigo.m3u
+          
+          # 4. Subir cambios
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add lista_amigo.m3u
+          git commit -m "IP actualizada a $IP_ACTUAL" || echo "Sin cambios"
+          git push origin main
