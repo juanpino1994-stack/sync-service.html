@@ -2,9 +2,8 @@ name: Traductor de IP Eficaz
 
 on:
   repository_dispatch:
-    # Este es el nombre del evento que debe coincidir en Pipedream
     types: [update_ip]
-  workflow_dispatch: # Esto permite que también lo pruebes a mano en GitHub
+  workflow_dispatch:
 
 jobs:
   actualizar:
@@ -13,26 +12,33 @@ jobs:
       - name: Descargar Repositorio
         uses: actions/checkout@v3
 
-      - name: Procesar IP
+      - name: Procesar IP Quirúrgico
         run: |
-          # Prioridad 1: IP que viene del botón. Prioridad 2: IP del servidor (por si falla el botón)
-          IP_BOTON="${{ github.event.client_payload.ip_usuario }}"
-          IP_SERVER=$(curl -s https://ifconfig.me)
+          # 1. Capturar la IP real que mandó tu botón
+          IP_NUEVA="${{ github.event.client_payload.ip_usuario }}"
           
-          if [ -n "$IP_BOTON" ]; then
-            IP_FINAL=$IP_BOTON
-          else
-            IP_FINAL=$IP_SERVER
+          # Si por alguna razón llega vacía, no hacemos nada para no romper la lista
+          if [ -z "$IP_NUEVA" ]; then
+            echo "Error: No se recibió la IP del botón"
+            exit 1
           fi
-          
-          echo "La IP a usar es: $IP_FINAL"
-          
-          # Hacer el cambio en tu archivo
-          sed "s/deportes.ksdjugfsddeports.com/$IP_FINAL/g" lista_maestra.txt > lista_amigo.m3u
 
-          # Subir cambios
+          # 2. Convertir tu IP a Base64 (lo que va después del :9092/)
+          IP_BASE64=$(echo -n "$IP_NUEVA" | base64)
+          
+          echo "Sincronizando todo a la IP: $IP_NUEVA"
+
+          # 3. EL REEMPLAZO TOTAL:
+          # Primero cambiamos el dominio/IP del principio
+          # Segundo cambiamos la parte codificada después del puerto
+          sed "s/deportes.ksdjugfsddeports.com/$IP_NUEVA/g" lista_maestra.txt > temp.txt
+          
+          # Esta línea busca lo que hay entre :9092/ y el siguiente / y lo cambia por tu nueva IP en base64
+          sed -E "s|:9092/[^/]+|:9092/$IP_BASE64|g" temp.txt > lista_amigo.m3u
+
+          # 4. Guardar cambios en GitHub
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "IP actualizada: $IP_FINAL" || echo "Sin cambios"
+          git commit -m "Sincronización total exitosa: $IP_NUEVA" || echo "Sin cambios"
           git push origin main
