@@ -1,27 +1,14 @@
-name: Traductor de IP eficaz
-on:
-  repository_dispatch:
-    types: [update_ip]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout del código
-        uses: actions/checkout@v2
-
-      - name: Actualizar IP en la Lista
+- name: Actualizar IP en la Lista
         run: |
-          # 1. Obtener tu IP actual
+          # 1. Obtener tu IP real
           IP_ACTUAL=$(curl -s https://ifconfig.me)
           
-          # 2. Reemplazar el dominio por tu IP real
-          # Usamos el nombre exacto: lista_maestra.txt
+          # 2. Cambiar el dominio por tu IP usando el nombre exacto de tu archivo
           sed "s/deportes.ksdjugfsddeports.com/$IP_ACTUAL/g" lista_maestra.txt > lista_amigo.m3u
           
-          # 3. Subir los cambios a tu repositorio
+          # 3. Guardar y subir los cambios
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "Lista actualizada con IP: $IP_ACTUAL"
-          git push
+          git commit -m "Lista actualizada con IP: $IP_ACTUAL" || echo "Sin cambios"
+          git push origin main
