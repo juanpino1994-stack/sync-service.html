@@ -15,16 +15,16 @@ jobs:
 
       - name: Actualizar Lista
         run: |
-          # 1. Obtenemos tu IP actual de Chile
-          IP_ACTUAL=$(curl -s https://ifconfig.me)
+          # 1. Tu IP real
+          IP=$(curl -s https://ifconfig.me)
           
-          # 2. Cambiamos la IP vieja (172.182.211.20) por la tuya
-          # Usamos un comando simple que no falla
-          sed "s/172.182.211.20/$IP_ACTUAL/g" lista_maestra.txt > lista_amigo.m3u
+          # 2. EL CAMBIO TOTAL:
+          # Esta línea busca el dominio de la foto Y la IP vieja, y pone la tuya.
+          sed -e "s/deportes.ksdjugfsddeports.com/$IP/g" -e "s/172.182.211.20/$IP/g" lista_maestra.txt > lista_amigo.m3u
           
-          # 3. Subir cambios de vuelta a GitHub
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          # 3. Guardar
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add lista_amigo.m3u
-          git commit -m "IP actualizada: $IP_ACTUAL" || exit 0
-          git push origin main
+          git commit -m "IP actualizada a $IP" || exit 0
+          git push
