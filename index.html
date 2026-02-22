@@ -1,30 +1,54 @@
-<script>
-    async function lanzar() {
-        const btn = document.getElementById('btn');
-        const status = document.getElementById('status');
-        btn.disabled = true;
-        status.innerText = "Capturando IP...";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sincronizador IP</title>
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a1a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #2d2d2d; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; border: 1px solid #444; }
+        button { padding: 15px 30px; font-size: 18px; background: #00ff88; color: #000; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #00cc6e; transform: scale(1.05); }
+        button:disabled { background: #555; cursor: not-allowed; }
+        #status { margin-top: 20px; font-size: 14px; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>IPTV Sync</h1>
+        <button id="btn" onclick="enviar()">ACTUALIZAR AHORA</button>
+        <div id="status">Haz clic para vincular tu IP</div>
+    </div>
 
-        try {
-            // 1. Obtenemos tu IP real
-            const res = await fetch('https://api.ipify.org?format=json');
-            const data = await res.json();
-            const miIP = data.ip;
+    <script>
+        async function enviar() {
+            const btn = document.getElementById('btn');
+            const status = document.getElementById('status');
+            btn.disabled = true;
+            status.innerText = "Obteniendo IP real...";
 
-            // 2. La enviamos a tu buzón de Pipedream
-            await fetch("https://eozxbiwyymdbb76.m.pipedream.net", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                // Enviamos 'ip_usuario', que es la "llave" que pusimos en Pipedream
-                body: JSON.stringify({ ip_usuario: miIP }) 
-            });
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                const miIP = data.ip;
 
-            status.innerHTML = "<b style='color:green'>¡IP Sincronizada! (" + miIP + ")</b><br>Espera 30 segundos a que GitHub actualice.";
-        } catch (e) {
-            status.innerText = "Error al sincronizar.";
-            console.error(e);
-        } finally {
-            btn.disabled = false;
+                status.innerText = "Enviando IP: " + miIP;
+
+                const response = await fetch("https://eozxbiwyymdbb76.m.pipedream.net", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ip_usuario: miIP })
+                });
+
+                if (response.ok) {
+                    status.innerHTML = "<b style='color:#00ff88'>¡ÉXITO!</b><br>Lista actualizada.";
+                }
+            } catch (e) {
+                status.innerText = "Error de red.";
+            } finally {
+                btn.disabled = false;
+            }
         }
-    }
-</script>
+    </script>
+</body>
+</html>
