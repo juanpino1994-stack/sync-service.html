@@ -2,24 +2,50 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sincronizador IPTV</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizador de Lista IPTV</title>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding: 50px; background-color: #1a1a1a; color: white;">
+<body style="background-color: #1a1a1a; color: white; font-family: sans-serif; text-align: center; padding-top: 50px;">
 
-    <h2>Panel de Control</h2>
-    <p>Presiona el botón para actualizar tu IP en la lista.</p>
+    <h2>Panel de Control IPTV</h2>
+    <p>Presiona el botón para actualizar la señal:</p>
 
-    <button onclick="activar()" style="padding: 20px 40px; font-size: 20px; background-color: #28a745; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
-        ACTUALIZAR IP AHORA
+    <button onclick="sincronizar()" style="
+        padding: 25px 40px; 
+        font-size: 20px; 
+        background-color: #28a745; 
+        color: white; 
+        border: none; 
+        border-radius: 15px; 
+        font-weight: bold; 
+        cursor: pointer;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);">
+        🔄 ACTUALIZAR LISTA
     </button>
 
+    <p id="estado" style="margin-top: 20px; color: #aaa;"></p>
+
     <script>
-        function activar() {
-            // Reemplaza con tu usuario y repositorio
-            const url = "https://github.com/juanpino1994-stack/sync-service.html/actions/workflows/actualizar_lista.yml";
-            alert("Te enviaré a GitHub para confirmar la actualización. Solo dale al botón 'Run Workflow'.");
-            window.location.href = url;
+        function sincronizar() {
+            const estado = document.getElementById('estado');
+            estado.innerText = "Enviando señal...";
+
+            // TU LINK DE PIPEDREAM
+            fetch("https://eozxbiwyymdbb76.m.pipedream.net")
+            .then(response => {
+                if (response.ok) {
+                    estado.style.color = "#00ff00";
+                    estado.innerText = "¡Éxito! El robot está trabajando en GitHub.";
+                    alert("Señal enviada correctamente. La lista se actualizará en unos segundos.");
+                } else {
+                    throw new Error();
+                }
+            })
+            .catch(error => {
+                estado.style.color = "#ff4444";
+                estado.innerText = "Error al conectar con el servidor.";
+                alert("Hubo un problema al enviar la señal.");
+            });
         }
     </script>
 
